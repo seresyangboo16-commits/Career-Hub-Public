@@ -1,0 +1,93 @@
+// prisma/schema.prisma
+// ─── Phase 1: User Registration Schema ───────────────────────
+// Defines only the User model with a Role enum.
+// Future phases will add Job, Application, and Skill models.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── User Model ───────────────────────────────────────────────
+// A single user table with a role enum to distinguish employers from seekers.
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(SEEKER)
+
+  jobs     Job[]
+  applications Application[]
+  skills     Skill[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Skill {
+  id          Int     @id @default(autoincrement())
+  name        String
+  //relation
+  userId      Int
+  user        User    @relation(fields:[userId], references:[id], onDelete: Cascade)
+  
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  @@unique([name, userId])
+}
+
+
+model Job{
+  id          Int     @id @default(autoincrement())
+  Title       String  
+  description String
+  company     String 
+  location    String
+  type        JobType
+
+  employerId  Int
+  employer    User    @relation(fields:[employerId], references:[id], onDelete: Cascade)
+
+  applications Application[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+  model Application {
+    id        Int     @id @default(autoincrement())
+    status    ApplicationStatus @default(PENDING)
+    seekerId  Int
+    seeker    User    @relation(fields:[seekerId], references:[id], onDelete:Cascade)
+     
+    jobId     Int 
+    jobs      Job     @relation(fields:[jobId], references:[id], onDelete:Cascade)
+
+    @@unique([jobId, seekerId])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+  }
+// ─── Enums ────────────────────────────────────────────────────
+enum Role {
+  SEEKER
+  EMPLOYER
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+  CONTRACT
+}
+
+enum ApplicationStatus {
+  APPROVED
+  PENDING
+  DECLINED
+}
